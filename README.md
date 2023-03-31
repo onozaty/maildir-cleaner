@@ -1,0 +1,2 @@
+# maildir-cleaner
+Cleanup maildir.
