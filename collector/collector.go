@@ -17,7 +17,7 @@ type Mail struct {
 }
 
 type Collector struct {
-	condition func(Mail) bool
+	target func(Mail) bool
 }
 
 func NewCollector(ageOfDays int64, ignoreFolderName string) *Collector {
@@ -26,14 +26,15 @@ func NewCollector(ageOfDays int64, ignoreFolderName string) *Collector {
 	targetMaxTime := time.Now().AddDate(0, 0, -int(ageOfDays))
 
 	return &Collector{
-		condition: func(mail Mail) bool {
+		target: func(mail Mail) bool {
 
 			if ignoreFolderName != "" &&
-				mail.FolderName == ignoreFolderName && strings.HasPrefix(mail.FolderName, mail.FolderName+".") {
+				(mail.FolderName == ignoreFolderName || strings.HasPrefix(mail.FolderName, ignoreFolderName+".")) {
 				// 対象外のフォルダ名と一致(サブフォルダも考慮)
 				return false
 			}
 
+			// 日時が取れなかった場合(=0)は対象外
 			return mail.Time.Unix() != 0 && mail.Time.Before(targetMaxTime)
 		},
 	}
@@ -59,7 +60,7 @@ func (c *Collector) Collect(rootMailFolderPath string) (*[]Mail, error) {
 	for _, entry := range entries {
 		// ディレクトリの先頭が"."になっているものがメールフォルダ
 		if entry.IsDir() && strings.HasPrefix(entry.Name(), ".") {
-			mailFolderName, err := mail.DecodeMailFolderName(entry.Name()[1:])
+			mailFolderName, err := mail.DecodeMailFolderName(entry.Name()[1:]) // 先頭の"."は除く
 			if err != nil {
 				return nil, err
 			}
@@ -125,7 +126,9 @@ func (c *Collector) collectMails(mailFolderName string, dirPath string) (*[]Mail
 			Time:       mail.MailTime(info.Name()),
 		}
 
-		collectedMails = append(collectedMails, mail)
+		if c.target(mail) {
+			collectedMails = append(collectedMails, mail)
+		}
 	}
 
 	return &collectedMails, nil
