@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/onozaty/maildir-cleaner/mail"
+	"github.com/onozaty/maildir-cleaner/folder"
 )
 
 type Mail struct {
@@ -60,7 +60,7 @@ func (c *Collector) Collect(rootMailFolderPath string) (*[]Mail, error) {
 	for _, entry := range entries {
 		// ディレクトリの先頭が"."になっているものがメールフォルダ
 		if entry.IsDir() && strings.HasPrefix(entry.Name(), ".") {
-			mailFolderName, err := mail.DecodeMailFolderName(entry.Name()[1:]) // 先頭の"."は除く
+			mailFolderName, err := folder.DecodeMailFolderName(entry.Name()[1:]) // 先頭の"."は除く
 			if err != nil {
 				return nil, err
 			}
@@ -123,7 +123,7 @@ func (c *Collector) collectMails(mailFolderName string, dirPath string) (*[]Mail
 			Path:       filepath.Join(dirPath, info.Name()),
 			FolderName: mailFolderName,
 			Size:       info.Size(),
-			Time:       mail.MailTime(info.Name()),
+			Time:       MailTime(info.Name()),
 		}
 
 		if c.target(mail) {

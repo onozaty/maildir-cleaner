@@ -1,4 +1,4 @@
-package mail
+package folder
 
 import (
 	"fmt"
