@@ -29,8 +29,15 @@ func TestCollector(t *testing.T) {
 		{
 			// 収集対象
 			time := agoDays(3)
-			mailPath := createMailByTime(t, mailFolder, "cur", time, 1)
-			expected = append(expected, Mail{Path: mailPath, FolderName: "", Size: 1, Time: time})
+			mailPath, fileName := createMailByTime(t, mailFolder, "cur", time, 1)
+			expected = append(expected, Mail{
+				FullPath:   mailPath,
+				FolderName: "",
+				SubDirName: "cur",
+				FileName:   fileName,
+				Size:       1,
+				Time:       time,
+			})
 		}
 		createMailByTime(t, mailFolder, "tmp", agoDays(4), 1)
 		createMailByTime(t, mailFolder, "tmp", agoDays(5), 1)
@@ -42,20 +49,41 @@ func TestCollector(t *testing.T) {
 		{
 			// 収集対象
 			time := agoDays(5)
-			mailPath := createMailByTime(t, mailFolder, "new", time, 2)
-			expected = append(expected, Mail{Path: mailPath, FolderName: "A", Size: 2, Time: time})
+			mailPath, fileName := createMailByTime(t, mailFolder, "new", time, 2)
+			expected = append(expected, Mail{
+				FullPath:   mailPath,
+				FolderName: "A",
+				SubDirName: "new",
+				FileName:   fileName,
+				Size:       2,
+				Time:       time,
+			})
 		}
 		{
 			// 収集対象
 			time := agoDays(4)
-			mailPath := createMailByTime(t, mailFolder, "new", time, 2)
-			expected = append(expected, Mail{Path: mailPath, FolderName: "A", Size: 2, Time: time})
+			mailPath, fileName := createMailByTime(t, mailFolder, "new", time, 2)
+			expected = append(expected, Mail{
+				FullPath:   mailPath,
+				FolderName: "A",
+				SubDirName: "new",
+				FileName:   fileName,
+				Size:       2,
+				Time:       time,
+			})
 		}
 		{
 			// 収集対象
 			time := agoDays(3)
-			mailPath := createMailByTime(t, mailFolder, "cur", time, 2)
-			expected = append(expected, Mail{Path: mailPath, FolderName: "A", Size: 2, Time: time})
+			mailPath, fileName := createMailByTime(t, mailFolder, "cur", time, 2)
+			expected = append(expected, Mail{
+				FullPath:   mailPath,
+				FolderName: "A",
+				SubDirName: "cur",
+				FileName:   fileName,
+				Size:       2,
+				Time:       time,
+			})
 		}
 		createMailByTime(t, mailFolder, "cur", agoDays(2), 2)
 		createMailByTime(t, mailFolder, "tmp", agoDays(1), 2)
@@ -66,8 +94,15 @@ func TestCollector(t *testing.T) {
 		{
 			// 収集対象
 			time := agoDays(5)
-			mailPath := createMailByTime(t, mailFolder, "new", time, 3)
-			expected = append(expected, Mail{Path: mailPath, FolderName: "B", Size: 3, Time: time})
+			mailPath, fileName := createMailByTime(t, mailFolder, "new", time, 3)
+			expected = append(expected, Mail{
+				FullPath:   mailPath,
+				FolderName: "B",
+				SubDirName: "new",
+				FileName:   fileName,
+				Size:       3,
+				Time:       time,
+			})
 		}
 	}
 	{
@@ -75,8 +110,15 @@ func TestCollector(t *testing.T) {
 		{
 			// 収集対象
 			time := agoDays(5)
-			mailPath := createMailByTime(t, mailFolder, "cur", time, 4)
-			expected = append(expected, Mail{Path: mailPath, FolderName: "C", Size: 4, Time: time})
+			mailPath, fileName := createMailByTime(t, mailFolder, "cur", time, 4)
+			expected = append(expected, Mail{
+				FullPath:   mailPath,
+				FolderName: "C",
+				SubDirName: "cur",
+				FileName:   fileName,
+				Size:       4,
+				Time:       time,
+			})
 		}
 	}
 	{
@@ -114,8 +156,15 @@ func TestCollector_FolderName(t *testing.T) {
 		{
 			// 収集対象
 			time := agoDays(10)
-			mailPath := createMailByTime(t, mailFolder, "new", time, 1)
-			expected = append(expected, Mail{Path: mailPath, FolderName: "", Size: 1, Time: time})
+			mailPath, fileName := createMailByTime(t, mailFolder, "new", time, 1)
+			expected = append(expected, Mail{
+				FullPath:   mailPath,
+				FolderName: "",
+				SubDirName: "new",
+				FileName:   fileName,
+				Size:       1,
+				Time:       time,
+			})
 		}
 	}
 
@@ -131,8 +180,15 @@ func TestCollector_FolderName(t *testing.T) {
 		{
 			// 収集対象
 			time := agoDays(10)
-			mailPath := createMailByTime(t, mailFolder, "new", time, 1)
-			expected = append(expected, Mail{Path: mailPath, FolderName: "aa", Size: 1, Time: time})
+			mailPath, fileName := createMailByTime(t, mailFolder, "new", time, 1)
+			expected = append(expected, Mail{
+				FullPath:   mailPath,
+				FolderName: "aa",
+				SubDirName: "new",
+				FileName:   fileName,
+				Size:       1,
+				Time:       time,
+			})
 		}
 	}
 	// ab (対象外フォルダ：対象外フォルダのサブフォルダ)
@@ -147,8 +203,15 @@ func TestCollector_FolderName(t *testing.T) {
 		{
 			// 収集対象
 			time := agoDays(11)
-			mailPath := createMailByTime(t, mailFolder, "cur", time, 1)
-			expected = append(expected, Mail{Path: mailPath, FolderName: "b", Size: 1, Time: time})
+			mailPath, fileName := createMailByTime(t, mailFolder, "cur", time, 1)
+			expected = append(expected, Mail{
+				FullPath:   mailPath,
+				FolderName: "b",
+				SubDirName: "cur",
+				FileName:   fileName,
+				Size:       1,
+				Time:       time,
+			})
 		}
 	}
 
@@ -176,8 +239,15 @@ func TestCollector_TimeNotIncluded(t *testing.T) {
 		{
 			// 収集対象
 			time := agoDays(1).Add(time.Second * (-2))
-			mailPath := createMailByTime(t, mailFolder, "cur", time, 1)
-			expected = append(expected, Mail{Path: mailPath, FolderName: "", Size: 1, Time: time})
+			mailPath, fileName := createMailByTime(t, mailFolder, "cur", time, 1)
+			expected = append(expected, Mail{
+				FullPath:   mailPath,
+				FolderName: "",
+				SubDirName: "cur",
+				FileName:   fileName,
+				Size:       1,
+				Time:       time,
+			})
 		}
 	}
 
@@ -203,8 +273,15 @@ func TestCollector_SkipSubFolder(t *testing.T) {
 		{
 			// 収集対象
 			time := agoDays(2)
-			mailPath := createMailByTime(t, mailFolder, "cur", time, 1)
-			expected = append(expected, Mail{Path: mailPath, FolderName: "", Size: 1, Time: time})
+			mailPath, fileName := createMailByTime(t, mailFolder, "cur", time, 1)
+			expected = append(expected, Mail{
+				FullPath:   mailPath,
+				FolderName: "",
+				SubDirName: "cur",
+				FileName:   fileName,
+				Size:       1,
+				Time:       time,
+			})
 		}
 	}
 
@@ -309,12 +386,12 @@ func createMailFolder(t *testing.T, parentDir string, folderName string) string 
 	return folderDir
 }
 
-func createMailByTime(t *testing.T, folderDir string, sub string, time time.Time, size int) string {
+func createMailByTime(t *testing.T, folderDir string, sub string, time time.Time, size int) (string, string) {
 
 	return createMailByName(t, folderDir, sub, fmt.Sprintf("%d", time.Unix()), size)
 }
 
-func createMailByName(t *testing.T, folderDir string, sub string, name string, size int) string {
+func createMailByName(t *testing.T, folderDir string, sub string, name string, size int) (string, string) {
 
 	mailPath := filepath.Join(folderDir, sub, name)
 	err := os.MkdirAll(filepath.Dir(mailPath), 0777)
@@ -323,7 +400,7 @@ func createMailByName(t *testing.T, folderDir string, sub string, name string, s
 	// サイズだけあっていればよいので中身は適当に
 	createFile(t, mailPath, strings.Repeat("x", size))
 
-	return mailPath
+	return mailPath, name
 }
 
 func agoDays(days int64) time.Time {

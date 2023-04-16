@@ -10,8 +10,10 @@ import (
 )
 
 type Mail struct {
-	Path       string
-	FolderName string
+	FullPath   string
+	FolderName string // デコード後のメールフォルダ名
+	SubDirName string // curなど
+	FileName   string
 	Size       int64
 	Time       time.Time
 }
@@ -120,8 +122,10 @@ func (c *Collector) collectMails(mailFolderName string, dirPath string) (*[]Mail
 		}
 
 		mail := Mail{
-			Path:       filepath.Join(dirPath, info.Name()),
+			FullPath:   filepath.Join(dirPath, info.Name()),
 			FolderName: mailFolderName,
+			SubDirName: filepath.Base(dirPath),
+			FileName:   info.Name(),
 			Size:       info.Size(),
 			Time:       MailTime(info.Name()),
 		}
