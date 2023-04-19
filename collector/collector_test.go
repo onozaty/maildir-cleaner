@@ -1,14 +1,11 @@
 package collector
 
 import (
-	"fmt"
-	"io/fs"
-	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
+	"github.com/onozaty/maildir-cleaner/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,14 +19,14 @@ func TestCollector(t *testing.T) {
 
 	// INBOX
 	{
-		mailFolder := createMailFolder(t, temp, "")
-		createMailByTime(t, mailFolder, "new", agoDays(0), 1)
-		createMailByTime(t, mailFolder, "new", agoDays(1), 1)
-		createMailByTime(t, mailFolder, "cur", agoDays(2), 1)
+		mailFolder := test.CreateMailFolder(t, temp, "")
+		test.CreateMailByTime(t, mailFolder, "new", test.AgoDays(t, 0), 1)
+		test.CreateMailByTime(t, mailFolder, "new", test.AgoDays(t, 1), 1)
+		test.CreateMailByTime(t, mailFolder, "cur", test.AgoDays(t, 2), 1)
 		{
 			// 収集対象
-			time := agoDays(3)
-			mailPath, fileName := createMailByTime(t, mailFolder, "cur", time, 1)
+			time := test.AgoDays(t, 3)
+			mailPath, fileName := test.CreateMailByTime(t, mailFolder, "cur", time, 1)
 			expected = append(expected, Mail{
 				FullPath:   mailPath,
 				FolderName: "",
@@ -39,17 +36,17 @@ func TestCollector(t *testing.T) {
 				Time:       time,
 			})
 		}
-		createMailByTime(t, mailFolder, "tmp", agoDays(4), 1)
-		createMailByTime(t, mailFolder, "tmp", agoDays(5), 1)
+		test.CreateMailByTime(t, mailFolder, "tmp", test.AgoDays(t, 4), 1)
+		test.CreateMailByTime(t, mailFolder, "tmp", test.AgoDays(t, 5), 1)
 	}
 
 	// その他フォルダ
 	{
-		mailFolder := createMailFolder(t, temp, ".A")
+		mailFolder := test.CreateMailFolder(t, temp, ".A")
 		{
 			// 収集対象
-			time := agoDays(5)
-			mailPath, fileName := createMailByTime(t, mailFolder, "new", time, 2)
+			time := test.AgoDays(t, 5)
+			mailPath, fileName := test.CreateMailByTime(t, mailFolder, "new", time, 2)
 			expected = append(expected, Mail{
 				FullPath:   mailPath,
 				FolderName: "A",
@@ -61,8 +58,8 @@ func TestCollector(t *testing.T) {
 		}
 		{
 			// 収集対象
-			time := agoDays(4)
-			mailPath, fileName := createMailByTime(t, mailFolder, "new", time, 2)
+			time := test.AgoDays(t, 4)
+			mailPath, fileName := test.CreateMailByTime(t, mailFolder, "new", time, 2)
 			expected = append(expected, Mail{
 				FullPath:   mailPath,
 				FolderName: "A",
@@ -74,8 +71,8 @@ func TestCollector(t *testing.T) {
 		}
 		{
 			// 収集対象
-			time := agoDays(3)
-			mailPath, fileName := createMailByTime(t, mailFolder, "cur", time, 2)
+			time := test.AgoDays(t, 3)
+			mailPath, fileName := test.CreateMailByTime(t, mailFolder, "cur", time, 2)
 			expected = append(expected, Mail{
 				FullPath:   mailPath,
 				FolderName: "A",
@@ -85,16 +82,16 @@ func TestCollector(t *testing.T) {
 				Time:       time,
 			})
 		}
-		createMailByTime(t, mailFolder, "cur", agoDays(2), 2)
-		createMailByTime(t, mailFolder, "tmp", agoDays(1), 2)
-		createMailByTime(t, mailFolder, "tmp", agoDays(0), 2)
+		test.CreateMailByTime(t, mailFolder, "cur", test.AgoDays(t, 2), 2)
+		test.CreateMailByTime(t, mailFolder, "tmp", test.AgoDays(t, 1), 2)
+		test.CreateMailByTime(t, mailFolder, "tmp", test.AgoDays(t, 0), 2)
 	}
 	{
-		mailFolder := createMailFolder(t, temp, ".B")
+		mailFolder := test.CreateMailFolder(t, temp, ".B")
 		{
 			// 収集対象
-			time := agoDays(5)
-			mailPath, fileName := createMailByTime(t, mailFolder, "new", time, 3)
+			time := test.AgoDays(t, 5)
+			mailPath, fileName := test.CreateMailByTime(t, mailFolder, "new", time, 3)
 			expected = append(expected, Mail{
 				FullPath:   mailPath,
 				FolderName: "B",
@@ -106,11 +103,11 @@ func TestCollector(t *testing.T) {
 		}
 	}
 	{
-		mailFolder := createMailFolder(t, temp, ".C")
+		mailFolder := test.CreateMailFolder(t, temp, ".C")
 		{
 			// 収集対象
-			time := agoDays(5)
-			mailPath, fileName := createMailByTime(t, mailFolder, "cur", time, 4)
+			time := test.AgoDays(t, 5)
+			mailPath, fileName := test.CreateMailByTime(t, mailFolder, "cur", time, 4)
 			expected = append(expected, Mail{
 				FullPath:   mailPath,
 				FolderName: "C",
@@ -122,15 +119,15 @@ func TestCollector(t *testing.T) {
 		}
 	}
 	{
-		mailFolder := createMailFolder(t, temp, ".D")
-		createMailByTime(t, mailFolder, "tmp", agoDays(5), 5)
+		mailFolder := test.CreateMailFolder(t, temp, ".D")
+		test.CreateMailByTime(t, mailFolder, "tmp", test.AgoDays(t, 5), 5)
 	}
 	{
 		// メールフォルダ以外のフォルダ(先頭に"."無し)
-		mailFolder := createMailFolder(t, temp, "a")
-		createMailByTime(t, mailFolder, "new", agoDays(5), 6)
-		createMailByTime(t, mailFolder, "cur", agoDays(5), 6)
-		createMailByTime(t, mailFolder, "tmp", agoDays(5), 6)
+		mailFolder := test.CreateMailFolder(t, temp, "a")
+		test.CreateMailByTime(t, mailFolder, "new", test.AgoDays(t, 5), 6)
+		test.CreateMailByTime(t, mailFolder, "cur", test.AgoDays(t, 5), 6)
+		test.CreateMailByTime(t, mailFolder, "tmp", test.AgoDays(t, 5), 6)
 	}
 
 	// ACT
@@ -151,12 +148,12 @@ func TestCollector_FolderName(t *testing.T) {
 
 	// INBOX
 	{
-		mailFolder := createMailFolder(t, temp, "")
-		createMailByTime(t, mailFolder, "new", agoDays(1), 1)
+		mailFolder := test.CreateMailFolder(t, temp, "")
+		test.CreateMailByTime(t, mailFolder, "new", test.AgoDays(t, 1), 1)
 		{
 			// 収集対象
-			time := agoDays(10)
-			mailPath, fileName := createMailByTime(t, mailFolder, "new", time, 1)
+			time := test.AgoDays(t, 10)
+			mailPath, fileName := test.CreateMailByTime(t, mailFolder, "new", time, 1)
 			expected = append(expected, Mail{
 				FullPath:   mailPath,
 				FolderName: "",
@@ -170,17 +167,17 @@ func TestCollector_FolderName(t *testing.T) {
 
 	// a (対象外フォルダ：除外対象のフォルダ)
 	{
-		mailFolder := createMailFolder(t, temp, ".a")
-		createMailByTime(t, mailFolder, "new", agoDays(10), 1)
-		createMailByTime(t, mailFolder, "cur", agoDays(10), 1)
+		mailFolder := test.CreateMailFolder(t, temp, ".a")
+		test.CreateMailByTime(t, mailFolder, "new", test.AgoDays(t, 10), 1)
+		test.CreateMailByTime(t, mailFolder, "cur", test.AgoDays(t, 10), 1)
 	}
 	// aa (対象フォルダ：対象外フォルダと前方一致)
 	{
-		mailFolder := createMailFolder(t, temp, ".aa")
+		mailFolder := test.CreateMailFolder(t, temp, ".aa")
 		{
 			// 収集対象
-			time := agoDays(10)
-			mailPath, fileName := createMailByTime(t, mailFolder, "new", time, 1)
+			time := test.AgoDays(t, 10)
+			mailPath, fileName := test.CreateMailByTime(t, mailFolder, "new", time, 1)
 			expected = append(expected, Mail{
 				FullPath:   mailPath,
 				FolderName: "aa",
@@ -193,17 +190,17 @@ func TestCollector_FolderName(t *testing.T) {
 	}
 	// ab (対象外フォルダ：対象外フォルダのサブフォルダ)
 	{
-		mailFolder := createMailFolder(t, temp, ".a.b")
-		createMailByTime(t, mailFolder, "new", agoDays(10), 1)
-		createMailByTime(t, mailFolder, "cur", agoDays(10), 1)
+		mailFolder := test.CreateMailFolder(t, temp, ".a.b")
+		test.CreateMailByTime(t, mailFolder, "new", test.AgoDays(t, 10), 1)
+		test.CreateMailByTime(t, mailFolder, "cur", test.AgoDays(t, 10), 1)
 	}
 	// b (対象フォルダ)
 	{
-		mailFolder := createMailFolder(t, temp, ".b")
+		mailFolder := test.CreateMailFolder(t, temp, ".b")
 		{
 			// 収集対象
-			time := agoDays(11)
-			mailPath, fileName := createMailByTime(t, mailFolder, "cur", time, 1)
+			time := test.AgoDays(t, 11)
+			mailPath, fileName := test.CreateMailByTime(t, mailFolder, "cur", time, 1)
 			expected = append(expected, Mail{
 				FullPath:   mailPath,
 				FolderName: "b",
@@ -233,13 +230,13 @@ func TestCollector_TimeNotIncluded(t *testing.T) {
 
 	// INBOX
 	{
-		mailFolder := createMailFolder(t, temp, "")
-		createMailByTime(t, mailFolder, "new", agoDays(1).Add(time.Second*2), 1)
-		createMailByName(t, mailFolder, "new", "abc", 1) // 日付の情報含まない
+		mailFolder := test.CreateMailFolder(t, temp, "")
+		test.CreateMailByTime(t, mailFolder, "new", test.AgoDays(t, 1).Add(time.Second*2), 1)
+		test.CreateMailByName(t, mailFolder, "new", "abc", 1) // 日付の情報含まない
 		{
 			// 収集対象
-			time := agoDays(1).Add(time.Second * (-2))
-			mailPath, fileName := createMailByTime(t, mailFolder, "cur", time, 1)
+			time := test.AgoDays(t, 1).Add(time.Second * (-2))
+			mailPath, fileName := test.CreateMailByTime(t, mailFolder, "cur", time, 1)
 			expected = append(expected, Mail{
 				FullPath:   mailPath,
 				FolderName: "",
@@ -269,11 +266,11 @@ func TestCollector_SkipSubFolder(t *testing.T) {
 
 	// INBOX
 	{
-		mailFolder := createMailFolder(t, temp, "")
+		mailFolder := test.CreateMailFolder(t, temp, "")
 		{
 			// 収集対象
-			time := agoDays(2)
-			mailPath, fileName := createMailByTime(t, mailFolder, "cur", time, 1)
+			time := test.AgoDays(t, 2)
+			mailPath, fileName := test.CreateMailByTime(t, mailFolder, "cur", time, 1)
 			expected = append(expected, Mail{
 				FullPath:   mailPath,
 				FolderName: "",
@@ -289,7 +286,7 @@ func TestCollector_SkipSubFolder(t *testing.T) {
 	{
 		// Maildirとしてあるべきフォルダ無し
 		// -> エラーとならずにスキップされること
-		createDir(t, temp, ".a")
+		test.CreateDir(t, temp, ".a")
 	}
 
 	// ACT
@@ -308,15 +305,15 @@ func TestCollector_InvalidFolderName(t *testing.T) {
 
 	// INBOX
 	{
-		mailFolder := createMailFolder(t, temp, "")
-		createMailByTime(t, mailFolder, "cur", agoDays(10), 1)
+		mailFolder := test.CreateMailFolder(t, temp, "")
+		test.CreateMailByTime(t, mailFolder, "cur", test.AgoDays(t, 10), 1)
 	}
 
 	// その他フォルダ
 	{
 		// フォルダ名としておかしなもの(修正UTF-7としてデコードできないもの)
-		mailFolder := createMailFolder(t, temp, ".&A")
-		createMailByTime(t, mailFolder, "cur", agoDays(10), 1)
+		mailFolder := test.CreateMailFolder(t, temp, ".&A")
+		test.CreateMailByTime(t, mailFolder, "cur", test.AgoDays(t, 10), 1)
 	}
 
 	// ACT
@@ -342,67 +339,4 @@ func TestCollector_RootFolderNotFound(t *testing.T) {
 	// OSによってエラーメッセージが異なるのでファイル名部分だけチェック
 	expect := "open " + rootMailFolderPath
 	assert.Contains(t, err.Error(), expect)
-}
-
-func createDir(t *testing.T, parent string, name string) string {
-
-	dir := filepath.Join(parent, name)
-	err := os.Mkdir(dir, 0777)
-	require.NoError(t, err)
-
-	return dir
-}
-
-func createFile(t *testing.T, path string, content string) fs.FileInfo {
-
-	file, err := os.Create(path)
-	require.NoError(t, err)
-
-	_, err = file.Write([]byte(content))
-	require.NoError(t, err)
-
-	info, err := file.Stat()
-	require.NoError(t, err)
-
-	err = file.Close()
-	require.NoError(t, err)
-
-	return info
-}
-
-func createMailFolder(t *testing.T, parentDir string, folderName string) string {
-
-	folderDir := parentDir
-
-	if folderName != "" {
-		// INBOX以外
-		folderDir = createDir(t, parentDir, folderName)
-	}
-
-	createDir(t, folderDir, "tmp")
-	createDir(t, folderDir, "new")
-	createDir(t, folderDir, "cur")
-
-	return folderDir
-}
-
-func createMailByTime(t *testing.T, folderDir string, sub string, time time.Time, size int) (string, string) {
-
-	return createMailByName(t, folderDir, sub, fmt.Sprintf("%d", time.Unix()), size)
-}
-
-func createMailByName(t *testing.T, folderDir string, sub string, name string, size int) (string, string) {
-
-	mailPath := filepath.Join(folderDir, sub, name)
-	err := os.MkdirAll(filepath.Dir(mailPath), 0777)
-	require.NoError(t, err)
-
-	// サイズだけあっていればよいので中身は適当に
-	createFile(t, mailPath, strings.Repeat("x", size))
-
-	return mailPath, name
-}
-
-func agoDays(days int64) time.Time {
-	return time.Unix(time.Now().Unix()-(days*24*60*60), 0)
 }

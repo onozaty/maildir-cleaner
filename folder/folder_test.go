@@ -1,11 +1,10 @@
 package folder
 
 import (
-	"io/fs"
-	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/onozaty/maildir-cleaner/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -80,7 +79,7 @@ func TestSetup(t *testing.T) {
 	temp := t.TempDir()
 
 	subscriptionsPath := filepath.Join(temp, "subscriptions")
-	createFile(t, subscriptionsPath, "X\n")
+	test.CreateFile(t, subscriptionsPath, "X\n")
 
 	// ACT
 	folderPath, err := Setup(temp, "AAA")
@@ -90,7 +89,7 @@ func TestSetup(t *testing.T) {
 
 	expectedFolderPath := filepath.Join(temp, ".AAA")
 	assert.Equal(t, expectedFolderPath, folderPath)
-	assert.Equal(t, "X\nAAA\n", readFile(t, subscriptionsPath))
+	assert.Equal(t, "X\nAAA\n", test.ReadFile(t, subscriptionsPath))
 
 	assert.DirExists(t, expectedFolderPath)
 	assert.DirExists(t, filepath.Join(expectedFolderPath, "cur"))
@@ -104,12 +103,12 @@ func TestSetup_AlreadyExists(t *testing.T) {
 	temp := t.TempDir()
 
 	subscriptionsPath := filepath.Join(temp, "subscriptions")
-	createFile(t, subscriptionsPath, "&MEIwRDBG-\nAAA")
+	test.CreateFile(t, subscriptionsPath, "&MEIwRDBG-\nAAA")
 
-	expectedFolderPath := createDir(t, temp, ".&MEIwRDBG-")
-	createDir(t, expectedFolderPath, "cur")
-	createDir(t, expectedFolderPath, "new")
-	createDir(t, expectedFolderPath, "tmp")
+	expectedFolderPath := test.CreateDir(t, temp, ".&MEIwRDBG-")
+	test.CreateDir(t, expectedFolderPath, "cur")
+	test.CreateDir(t, expectedFolderPath, "new")
+	test.CreateDir(t, expectedFolderPath, "tmp")
 
 	// ACT
 	folderPath, err := Setup(temp, "あいう")
@@ -118,7 +117,7 @@ func TestSetup_AlreadyExists(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, expectedFolderPath, folderPath)
-	assert.Equal(t, "&MEIwRDBG-\nAAA", readFile(t, subscriptionsPath))
+	assert.Equal(t, "&MEIwRDBG-\nAAA", test.ReadFile(t, subscriptionsPath))
 
 	assert.DirExists(t, expectedFolderPath)
 	assert.DirExists(t, filepath.Join(expectedFolderPath, "cur"))
@@ -126,36 +125,80 @@ func TestSetup_AlreadyExists(t *testing.T) {
 	assert.DirExists(t, filepath.Join(expectedFolderPath, "tmp"))
 }
 
-func createDir(t *testing.T, parent string, name string) string {
+func TestSetup_SubscriptionsEmpty(t *testing.T) {
 
-	dir := filepath.Join(parent, name)
-	err := os.Mkdir(dir, 0777)
+	// ARRANGE
+	temp := t.TempDir()
+
+	subscriptionsPath := filepath.Join(temp, "subscriptions")
+	test.CreateFile(t, subscriptionsPath, "")
+
+	// ACT
+	folderPath, err := Setup(temp, "A.B")
+
+	// ASSERT
 	require.NoError(t, err)
 
-	return dir
+	expectedFolderPath := filepath.Join(temp, ".A.B")
+	assert.Equal(t, expectedFolderPath, folderPath)
+	assert.Equal(t, "A.B\n", test.ReadFile(t, subscriptionsPath))
+
+	assert.DirExists(t, expectedFolderPath)
+	assert.DirExists(t, filepath.Join(expectedFolderPath, "cur"))
+	assert.DirExists(t, filepath.Join(expectedFolderPath, "new"))
+	assert.DirExists(t, filepath.Join(expectedFolderPath, "tmp"))
 }
 
-func createFile(t *testing.T, path string, content string) fs.FileInfo {
+func TestSetup_SubscriptionsNoLineBreak(t *testing.T) {
 
-	file, err := os.Create(path)
+	// ARRANGE
+	temp := t.TempDir()
+
+	subscriptionsPath := filepath.Join(temp, "subscriptions")
+	test.CreateFile(t, subscriptionsPath, "AAA\nBBB")
+
+	// ACT
+	folderPath, err := Setup(temp, "AA")
+
+	// ASSERT
 	require.NoError(t, err)
 
-	_, err = file.Write([]byte(content))
-	require.NoError(t, err)
+	expectedFolderPath := filepath.Join(temp, ".AA")
+	assert.Equal(t, expectedFolderPath, folderPath)
+	assert.Equal(t, "AAA\nBBB\nAA\n", test.ReadFile(t, subscriptionsPath))
 
-	info, err := file.Stat()
-	require.NoError(t, err)
-
-	err = file.Close()
-	require.NoError(t, err)
-
-	return info
+	assert.DirExists(t, expectedFolderPath)
+	assert.DirExists(t, filepath.Join(expectedFolderPath, "cur"))
+	assert.DirExists(t, filepath.Join(expectedFolderPath, "new"))
+	assert.DirExists(t, filepath.Join(expectedFolderPath, "tmp"))
 }
 
-func readFile(t *testing.T, path string) string {
+func TestSetup_SubscriptionsNotFound(t *testing.T) {
 
-	bo, err := os.ReadFile(path)
-	require.NoError(t, err)
+	// ARRANGE
+	temp := t.TempDir()
 
-	return string(bo)
+	// subscriptions無し
+
+	// ACT
+	_, err := Setup(temp, "AA")
+
+	// ASSERT
+	require.EqualError(t, err, "subscriptions file not found: currently only dovecot is supported")
+}
+
+func TestSetup_RootDirNotFound(t *testing.T) {
+
+	// ARRANGE
+	temp := t.TempDir()
+	rootMailFolderPath := filepath.Join(temp, "xxxx") // 存在しないフォルダ
+
+	// ACT
+	_, err := Setup(rootMailFolderPath, "AA")
+
+	// ASSERT
+	require.Error(t, err)
+	// OSによってエラーメッセージが異なるのでファイル名部分だけチェック
+	expect := "mkdir " + filepath.Join(rootMailFolderPath, ".AA")
+	assert.Contains(t, err.Error(), expect)
 }

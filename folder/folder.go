@@ -102,7 +102,7 @@ func subscribe(rootMailFolderPath string, encodedFolderName string) error {
 
 func ensureDir(dirPath string) error {
 	if isNotExist(dirPath) {
-		err := os.MkdirAll(dirPath, 0777)
+		err := os.Mkdir(dirPath, 0777)
 		if err != nil {
 			return err
 		}
