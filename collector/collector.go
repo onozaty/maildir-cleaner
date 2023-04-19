@@ -11,7 +11,7 @@ import (
 
 type Mail struct {
 	FullPath   string
-	FolderName string // デコード後のメールフォルダ名
+	FolderName string // エンコード前のメールフォルダ名(先頭の"."は付かない)
 	SubDirName string // curなど
 	FileName   string
 	Size       int64

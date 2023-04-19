@@ -29,8 +29,8 @@ func EncodeMailFolderName(decodedName string) (string, error) {
 	return encodedName, nil
 }
 
-func Setup(rootMailFolderPath string, decodedFolderName string) (string, error) {
-	encodedFolderName, err := EncodeMailFolderName(decodedFolderName)
+func Setup(rootMailFolderPath string, folderName string) (string, error) {
+	encodedFolderName, err := EncodeMailFolderName(folderName)
 	if err != nil {
 		return "", err
 	}
