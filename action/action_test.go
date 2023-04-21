@@ -277,7 +277,13 @@ func setupMails(t *testing.T, root string) []collector.Mail {
 func createMail(t *testing.T, rootDir string, folderName string, sub string, name string) collector.Mail {
 
 	encodedFolderName, _ := folder.EncodeMailFolderName(folderName)
-	folderDir := test.CreateMailFolder(t, rootDir, encodedFolderName)
+	var physicalFolderName string
+	if encodedFolderName == "" {
+		physicalFolderName = encodedFolderName
+	} else {
+		physicalFolderName = "." + encodedFolderName
+	}
+	folderDir := test.CreateMailFolder(t, rootDir, physicalFolderName)
 
 	size := 1 // サイズは固定
 

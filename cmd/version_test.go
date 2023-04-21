@@ -2,12 +2,15 @@ package cmd
 
 import (
 	"bytes"
-	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestVersionCmd(t *testing.T) {
 
+	// ARRANGE
 	rootCmd := newRootCmd()
 	rootCmd.SetArgs([]string{
 		"version",
@@ -16,14 +19,12 @@ func TestVersionCmd(t *testing.T) {
 	buf := new(bytes.Buffer)
 	rootCmd.SetOutput(buf)
 
+	// ACT
 	err := rootCmd.Execute()
-	if err != nil {
-		t.Fatal("failed test\n", err)
-	}
+
+	// ASSERT
+	require.NoError(t, err)
 
 	result := buf.String()
-
-	if !strings.HasPrefix(result, "Version: dev\nRevision: dev\nOS: ") {
-		t.Fatal("failed test\n", result)
-	}
+	assert.Contains(t, result, "Version: dev\nRevision: dev\nOS: ")
 }

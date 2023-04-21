@@ -48,13 +48,13 @@ func ReadFile(t *testing.T, path string) string {
 	return string(bo)
 }
 
-func CreateMailFolder(t *testing.T, parentDir string, encodedFolderName string) string {
+func CreateMailFolder(t *testing.T, parentDir string, physicalFolderName string) string {
 
 	folderDir := parentDir
 
-	if encodedFolderName != "" {
+	if physicalFolderName != "" {
 		// INBOX以外
-		folderDir = CreateDir(t, parentDir, encodedFolderName)
+		folderDir = CreateDir(t, parentDir, physicalFolderName)
 	}
 
 	CreateDir(t, folderDir, "tmp")
@@ -81,6 +81,6 @@ func CreateMailByName(t *testing.T, folderDir string, sub string, name string, s
 	return mailPath, name
 }
 
-func AgoDays(t *testing.T, days int64) time.Time {
-	return time.Unix(time.Now().Unix()-(days*24*60*60), 0)
+func AgoDays(t *testing.T, days int) time.Time {
+	return time.Unix(time.Now().Unix()-(int64(days)*24*60*60), 0)
 }
