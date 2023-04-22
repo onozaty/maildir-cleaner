@@ -95,13 +95,13 @@ func TestArchive(t *testing.T) {
 	}
 
 	// ACT
-	err := Archive(temp, &targetMails, "Archived")
+	resultArchiveMails, err := Archive(temp, &targetMails, "Archived")
 
 	// ASSERT
 	require.NoError(t, err)
 
 	// 対象のメールが元のフォルダに無い＆移動先にあること
-	for _, mail := range targetMails {
+	for i, mail := range targetMails {
 		assert.NoFileExists(t, mail.FullPath)
 
 		var archivedFolderName string
@@ -119,11 +119,16 @@ func TestArchive(t *testing.T) {
 			mail.FileName)
 
 		assert.FileExists(t, archivedMailPath)
-	}
-
-	// 対象のメールが移動先にあること
-	for _, mail := range targetMails {
 		assert.NoFileExists(t, mail.FullPath)
+
+		// 戻りの内容とあっていること
+		resultArchiveMail := (*resultArchiveMails)[i]
+		assert.Equal(t, archivedMailPath, resultArchiveMail.FullPath)
+		assert.Equal(t, archivedFolderName, resultArchiveMail.FolderName)
+		assert.Equal(t, mail.SubDirName, resultArchiveMail.SubDirName)
+		assert.Equal(t, mail.FileName, resultArchiveMail.FileName)
+		assert.Equal(t, mail.Size, resultArchiveMail.Size)
+		assert.Equal(t, mail.Time, resultArchiveMail.Time)
 	}
 
 	// 対象外のメールが削除されていないこと
@@ -152,13 +157,13 @@ func TestArchive_ArchiveFolderBaseNameMultibyte(t *testing.T) {
 	}
 
 	// ACT
-	err := Archive(temp, &targetMails, "第1.第2") // マルチバイト
+	resultArchiveMails, err := Archive(temp, &targetMails, "第1.第2") // マルチバイト
 
 	// ASSERT
 	require.NoError(t, err)
 
 	// 対象のメールが元のフォルダに無い＆移動先にあること
-	for _, mail := range targetMails {
+	for i, mail := range targetMails {
 		assert.NoFileExists(t, mail.FullPath)
 
 		var archivedFolderName string
@@ -176,11 +181,16 @@ func TestArchive_ArchiveFolderBaseNameMultibyte(t *testing.T) {
 			mail.FileName)
 
 		assert.FileExists(t, archivedMailPath)
-	}
-
-	// 対象のメールが移動先にあること
-	for _, mail := range targetMails {
 		assert.NoFileExists(t, mail.FullPath)
+
+		// 戻りの内容とあっていること
+		resultArchiveMail := (*resultArchiveMails)[i]
+		assert.Equal(t, archivedMailPath, resultArchiveMail.FullPath)
+		assert.Equal(t, archivedFolderName, resultArchiveMail.FolderName)
+		assert.Equal(t, mail.SubDirName, resultArchiveMail.SubDirName)
+		assert.Equal(t, mail.FileName, resultArchiveMail.FileName)
+		assert.Equal(t, mail.Size, resultArchiveMail.Size)
+		assert.Equal(t, mail.Time, resultArchiveMail.Time)
 	}
 
 	// 対象外のメールが削除されていないこと
@@ -211,7 +221,7 @@ func TestArchive_MailNotFound(t *testing.T) {
 	}
 
 	// ACT
-	err := Archive(temp, &targetMails, "Archived")
+	_, err := Archive(temp, &targetMails, "Archived")
 
 	// ASSERT
 	// OSによってエラーメッセージが異なるのでファイル名部分だけチェック
@@ -238,7 +248,7 @@ func TestArchive_RootNotFound(t *testing.T) {
 	}
 
 	// ACT
-	err := Archive(rootMailFolderPath, &targetMails, "Archived")
+	_, err := Archive(rootMailFolderPath, &targetMails, "Archived")
 
 	// ASSERT
 	// OSによってエラーメッセージが異なるのでファイル名部分だけチェック
