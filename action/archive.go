@@ -8,11 +8,48 @@ import (
 	"github.com/onozaty/maildir-cleaner/folder"
 )
 
-func Archive(rootMailFolderPath string, mails *[]collector.Mail, archiveFolderBaseName string) (*[]collector.Mail, error) {
+type ArchiveFolderNameGenerator interface {
+	Generate(mail collector.Mail) string
+}
+
+type KeepArchiveFolderNameGenerator struct {
+	ArchiveFolderBaseName string
+}
+
+func (g *KeepArchiveFolderNameGenerator) Generate(mail collector.Mail) string {
+	if mail.FolderName == "" {
+		// INBOXの場合は、指定したアーカイブフォルダに
+		return g.ArchiveFolderBaseName
+	}
+
+	return g.ArchiveFolderBaseName + "." + mail.FolderName
+}
+
+type YearArchiveFolderNameGenerator struct {
+	ArchiveFolderBaseName string
+}
+
+func (g *YearArchiveFolderNameGenerator) Generate(mail collector.Mail) string {
+	year := mail.Time.UTC().Format("2006")
+	return g.ArchiveFolderBaseName + "." + year
+}
+
+type MonthArchiveFolderNameGenerator struct {
+	ArchiveFolderBaseName string
+}
+
+func (g *MonthArchiveFolderNameGenerator) Generate(mail collector.Mail) string {
+	year := mail.Time.UTC().Format("2006")
+	month := mail.Time.UTC().Format("01")
+	return g.ArchiveFolderBaseName + "." + year + "." + month
+}
+
+func Archive(rootMailFolderPath string, mails *[]collector.Mail, archiveFolderNameGenerator ArchiveFolderNameGenerator) (*[]collector.Mail, error) {
 	archivedMails := []collector.Mail{}
 
 	for _, mail := range *mails {
-		archivedMail, err := archiveMail(rootMailFolderPath, mail, archiveFolderBaseName)
+		archiveFolderName := archiveFolderNameGenerator.Generate(mail)
+		archivedMail, err := archiveMail(rootMailFolderPath, mail, archiveFolderName)
 		if err != nil {
 			return nil, err
 		}
@@ -22,9 +59,7 @@ func Archive(rootMailFolderPath string, mails *[]collector.Mail, archiveFolderBa
 	return &archivedMails, nil
 }
 
-func archiveMail(rootMailFolderPath string, mail collector.Mail, archiveFolderBaseName string) (*collector.Mail, error) {
-
-	archiveFolderName := joinArchiveFolderName(archiveFolderBaseName, mail.FolderName)
+func archiveMail(rootMailFolderPath string, mail collector.Mail, archiveFolderName string) (*collector.Mail, error) {
 
 	archiveFolderPath, err := folder.Setup(rootMailFolderPath, archiveFolderName)
 	if err != nil {
@@ -44,13 +79,4 @@ func archiveMail(rootMailFolderPath string, mail collector.Mail, archiveFolderBa
 		Size:       mail.Size,
 		Time:       mail.Time,
 	}, nil
-}
-
-func joinArchiveFolderName(archiveFolderBaseName string, beforeFolderName string) string {
-	if beforeFolderName == "" {
-		// INBOXの場合は、指定したアーカイブフォルダに
-		return archiveFolderBaseName
-	}
-
-	return archiveFolderBaseName + "." + beforeFolderName
 }

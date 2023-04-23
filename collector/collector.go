@@ -3,6 +3,7 @@ package collector
 import (
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -75,6 +76,15 @@ func (c *Collector) Collect(rootMailFolderPath string) (*[]Mail, error) {
 			collectedMails = append(collectedMails, *mails...)
 		}
 	}
+
+	// フォルダ名+ファイル名でソート
+	// (順番が必ず同じになるように)
+	sort.Slice(collectedMails, func(i, j int) bool {
+		if collectedMails[i].FolderName == collectedMails[j].FolderName {
+			return collectedMails[i].FileName < collectedMails[j].FileName
+		}
+		return collectedMails[i].FolderName < collectedMails[j].FolderName
+	})
 
 	return &collectedMails, nil
 }

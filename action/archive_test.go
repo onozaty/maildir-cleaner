@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestArchive(t *testing.T) {
+func TestArchive_Keep(t *testing.T) {
 
 	// ARRANGE
 	temp := t.TempDir()
@@ -31,8 +31,12 @@ func TestArchive(t *testing.T) {
 		}
 	}
 
+	archiveFolderNameGenerator := &KeepArchiveFolderNameGenerator{
+		ArchiveFolderBaseName: "Archived",
+	}
+
 	// ACT
-	resultArchiveMails, err := Archive(temp, &targetMails, "Archived")
+	resultArchiveMails, err := Archive(temp, &targetMails, archiveFolderNameGenerator)
 
 	// ASSERT
 	require.NoError(t, err)
@@ -72,6 +76,151 @@ func TestArchive(t *testing.T) {
 	for _, mail := range nonTargetMails {
 		assert.FileExists(t, mail.FullPath)
 	}
+
+	// subscriptionsに追加されていること
+	assert.Equal(t, "A\nA.B\n&MMYwuTDI-1\nArchived\nArchived.A\nArchived.A.B\nArchived.&MMYwuTDI-1\n", test.ReadFile(t, filepath.Join(temp, "subscriptions")))
+}
+
+func TestArchive_Year(t *testing.T) {
+
+	// ARRANGE
+	temp := t.TempDir()
+
+	targetMails := []collector.Mail{
+		createMailByYearMonth(t, temp, "", "new", 2020, 1),
+		createMailByYearMonth(t, temp, "", "cur", 2020, 2),
+		createMailByYearMonth(t, temp, "A", "new", 2021, 1),
+		createMailByYearMonth(t, temp, "A", "cur", 2021, 12),
+	}
+	archivedFolderNames := []string{
+		"Archived.2020",
+		"Archived.2020",
+		"Archived.2021",
+		"Archived.2021",
+	}
+
+	nonTargetMails := []collector.Mail{
+		createMailByYearMonth(t, temp, "", "new", 2022, 1),
+		createMailByYearMonth(t, temp, "A", "cur", 2022, 1),
+	}
+
+	subscriptionsPath := filepath.Join(temp, "subscriptions")
+	test.CreateFile(t, subscriptionsPath, "A\nA.B\nArchived.2020\n")
+
+	archiveFolderNameGenerator := &YearArchiveFolderNameGenerator{
+		ArchiveFolderBaseName: "Archived",
+	}
+
+	// ACT
+	resultArchiveMails, err := Archive(temp, &targetMails, archiveFolderNameGenerator)
+
+	// ASSERT
+	require.NoError(t, err)
+
+	// 対象のメールが元のフォルダに無い＆移動先にあること
+	for i, mail := range targetMails {
+		assert.NoFileExists(t, mail.FullPath)
+
+		archivedFolderName := archivedFolderNames[i]
+
+		encodedFolderName, _ := folder.EncodeMailFolderName(archivedFolderName)
+		archivedMailPath := filepath.Join(
+			temp,
+			"."+encodedFolderName,
+			mail.SubDirName,
+			mail.FileName)
+
+		assert.FileExists(t, archivedMailPath)
+		assert.NoFileExists(t, mail.FullPath)
+
+		// 戻りの内容とあっていること
+		resultArchiveMail := (*resultArchiveMails)[i]
+		assert.Equal(t, archivedMailPath, resultArchiveMail.FullPath)
+		assert.Equal(t, archivedFolderName, resultArchiveMail.FolderName)
+		assert.Equal(t, mail.SubDirName, resultArchiveMail.SubDirName)
+		assert.Equal(t, mail.FileName, resultArchiveMail.FileName)
+		assert.Equal(t, mail.Size, resultArchiveMail.Size)
+		assert.Equal(t, mail.Time, resultArchiveMail.Time)
+	}
+
+	// 対象外のメールが削除されていないこと
+	for _, mail := range nonTargetMails {
+		assert.FileExists(t, mail.FullPath)
+	}
+
+	// subscriptionsに追加されていること
+	assert.Equal(t, "A\nA.B\nArchived.2020\nArchived.2021\n", test.ReadFile(t, subscriptionsPath))
+}
+
+func TestArchive_Month(t *testing.T) {
+
+	// ARRANGE
+	temp := t.TempDir()
+
+	targetMails := []collector.Mail{
+		createMailByYearMonth(t, temp, "", "new", 2020, 1),
+		createMailByYearMonth(t, temp, "", "cur", 2020, 2),
+		createMailByYearMonth(t, temp, "A", "new", 2021, 1),
+		createMailByYearMonth(t, temp, "A", "cur", 2021, 12),
+	}
+	archivedFolderNames := []string{
+		"Archived.2020.01",
+		"Archived.2020.02",
+		"Archived.2021.01",
+		"Archived.2021.12",
+	}
+
+	nonTargetMails := []collector.Mail{
+		createMailByYearMonth(t, temp, "", "new", 2022, 1),
+		createMailByYearMonth(t, temp, "A", "cur", 2022, 1),
+	}
+
+	subscriptionsPath := filepath.Join(temp, "subscriptions")
+	test.CreateFile(t, subscriptionsPath, "A\nA.B\nArchived.2020.01\n")
+
+	archiveFolderNameGenerator := &MonthArchiveFolderNameGenerator{
+		ArchiveFolderBaseName: "Archived",
+	}
+
+	// ACT
+	resultArchiveMails, err := Archive(temp, &targetMails, archiveFolderNameGenerator)
+
+	// ASSERT
+	require.NoError(t, err)
+
+	// 対象のメールが元のフォルダに無い＆移動先にあること
+	for i, mail := range targetMails {
+		assert.NoFileExists(t, mail.FullPath)
+
+		archivedFolderName := archivedFolderNames[i]
+
+		encodedFolderName, _ := folder.EncodeMailFolderName(archivedFolderName)
+		archivedMailPath := filepath.Join(
+			temp,
+			"."+encodedFolderName,
+			mail.SubDirName,
+			mail.FileName)
+
+		assert.FileExists(t, archivedMailPath)
+		assert.NoFileExists(t, mail.FullPath)
+
+		// 戻りの内容とあっていること
+		resultArchiveMail := (*resultArchiveMails)[i]
+		assert.Equal(t, archivedMailPath, resultArchiveMail.FullPath)
+		assert.Equal(t, archivedFolderName, resultArchiveMail.FolderName)
+		assert.Equal(t, mail.SubDirName, resultArchiveMail.SubDirName)
+		assert.Equal(t, mail.FileName, resultArchiveMail.FileName)
+		assert.Equal(t, mail.Size, resultArchiveMail.Size)
+		assert.Equal(t, mail.Time, resultArchiveMail.Time)
+	}
+
+	// 対象外のメールが削除されていないこと
+	for _, mail := range nonTargetMails {
+		assert.FileExists(t, mail.FullPath)
+	}
+
+	// subscriptionsに追加されていること
+	assert.Equal(t, "A\nA.B\nArchived.2020.01\nArchived.2020.02\nArchived.2021.01\nArchived.2021.12\n", test.ReadFile(t, subscriptionsPath))
 }
 
 func TestArchive_ArchiveFolderBaseNameMultibyte(t *testing.T) {
@@ -93,8 +242,12 @@ func TestArchive_ArchiveFolderBaseNameMultibyte(t *testing.T) {
 		}
 	}
 
+	archiveFolderNameGenerator := &KeepArchiveFolderNameGenerator{
+		ArchiveFolderBaseName: "第1.第2", // マルチバイト
+	}
+
 	// ACT
-	resultArchiveMails, err := Archive(temp, &targetMails, "第1.第2") // マルチバイト
+	resultArchiveMails, err := Archive(temp, &targetMails, archiveFolderNameGenerator)
 
 	// ASSERT
 	require.NoError(t, err)
@@ -157,8 +310,12 @@ func TestArchive_MailNotFound(t *testing.T) {
 		},
 	}
 
+	archiveFolderNameGenerator := &KeepArchiveFolderNameGenerator{
+		ArchiveFolderBaseName: "Archived",
+	}
+
 	// ACT
-	_, err := Archive(temp, &targetMails, "Archived")
+	_, err := Archive(temp, &targetMails, archiveFolderNameGenerator)
 
 	// ASSERT
 	// OSによってエラーメッセージが異なるのでファイル名部分だけチェック
@@ -184,8 +341,12 @@ func TestArchive_RootNotFound(t *testing.T) {
 		},
 	}
 
+	archiveFolderNameGenerator := &KeepArchiveFolderNameGenerator{
+		ArchiveFolderBaseName: "Archived",
+	}
+
 	// ACT
-	_, err := Archive(rootMailFolderPath, &targetMails, "Archived")
+	_, err := Archive(rootMailFolderPath, &targetMails, archiveFolderNameGenerator)
 
 	// ASSERT
 	// OSによってエラーメッセージが異なるのでファイル名部分だけチェック

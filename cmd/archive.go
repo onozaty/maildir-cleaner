@@ -7,6 +7,7 @@ import (
 	"github.com/onozaty/maildir-cleaner/action"
 	"github.com/onozaty/maildir-cleaner/collector"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 func newArchiveCmd() *cobra.Command {
@@ -18,7 +19,11 @@ func newArchiveCmd() *cobra.Command {
 
 			maildirPath, _ := cmd.Flags().GetString("dir")
 			age, _ := cmd.Flags().GetInt64("age")
-			archiveFolderName, _ := cmd.Flags().GetString("archive-folder")
+
+			archiveFolderNameGenerator, err := newArchiveFolderNameGenerator(cmd.Flags())
+			if err != nil { // 許可されていなパラメータの可能性あり
+				return err
+			}
 
 			// 引数の解析に成功した時点で、エラーが起きてもUsageは表示しない
 			cmd.SilenceUsage = true
@@ -26,7 +31,7 @@ func newArchiveCmd() *cobra.Command {
 			return runArchive(
 				maildirPath,
 				age,
-				archiveFolderName,
+				archiveFolderNameGenerator,
 				cmd.OutOrStdout())
 		},
 	}
@@ -37,11 +42,12 @@ func newArchiveCmd() *cobra.Command {
 	subCmd.MarkFlagRequired("age")
 
 	subCmd.Flags().StringP("archive-folder", "", "Archived", "Archive folder name.")
+	subCmd.Flags().StringP("archive-pattern", "", "keep", "Archive pattern. can be specified: keep, year, month")
 
 	return subCmd
 }
 
-func runArchive(maildirPath string, age int64, archiveFolderName string, writer io.Writer) error {
+func runArchive(maildirPath string, age int64, archiveFolderNameGenerator action.ArchiveFolderNameGenerator, writer io.Writer) error {
 
 	// 対象のメールを収集
 	fmt.Fprintf(writer, "Starts searching for the target mails. maildir: %s age: %d\n", maildirPath, age)
@@ -63,7 +69,7 @@ func runArchive(maildirPath string, age int64, archiveFolderName string, writer 
 
 	// アーカイブ実施
 	fmt.Fprintf(writer, "Starts archiving mails.\n")
-	archivedMails, err := action.Archive(maildirPath, mails, archiveFolderName)
+	archivedMails, err := action.Archive(maildirPath, mails, archiveFolderNameGenerator)
 	if err != nil {
 		return err
 	}
@@ -72,4 +78,27 @@ func runArchive(maildirPath string, age int64, archiveFolderName string, writer 
 	renderTargetMails(writer, archivedMails)
 
 	return nil
+}
+
+func newArchiveFolderNameGenerator(f *pflag.FlagSet) (action.ArchiveFolderNameGenerator, error) {
+
+	archiveFolderName, _ := f.GetString("archive-folder")
+	archivePattern, _ := f.GetString("archive-pattern")
+
+	switch archivePattern {
+	case "keep":
+		return &action.KeepArchiveFolderNameGenerator{
+			ArchiveFolderBaseName: archiveFolderName,
+		}, nil
+	case "year":
+		return &action.YearArchiveFolderNameGenerator{
+			ArchiveFolderBaseName: archiveFolderName,
+		}, nil
+	case "month":
+		return &action.MonthArchiveFolderNameGenerator{
+			ArchiveFolderBaseName: archiveFolderName,
+		}, nil
+	default:
+		return nil, fmt.Errorf("invalid archive-pattern '%s'", archivePattern)
+	}
 }

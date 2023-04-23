@@ -82,28 +82,28 @@ func setupMails(t *testing.T, root string) []collector.Mail {
 
 	return []collector.Mail{
 		// INBOX
-		createMail(t, root, "", "new", "a"),
-		createMail(t, root, "", "new", "b"),
-		createMail(t, root, "", "new", "c"),
-		createMail(t, root, "", "cur", "d"),
-		createMail(t, root, "", "cur", "e"),
-		createMail(t, root, "", "cur", "f"),
+		createMailByName(t, root, "", "new", "a"),
+		createMailByName(t, root, "", "new", "b"),
+		createMailByName(t, root, "", "new", "c"),
+		createMailByName(t, root, "", "cur", "d"),
+		createMailByName(t, root, "", "cur", "e"),
+		createMailByName(t, root, "", "cur", "f"),
 		// A
-		createMail(t, root, "A", "new", "g"),
-		createMail(t, root, "A", "new", "h"),
-		createMail(t, root, "A", "new", "i"),
+		createMailByName(t, root, "A", "new", "g"),
+		createMailByName(t, root, "A", "new", "h"),
+		createMailByName(t, root, "A", "new", "i"),
 		// A.B
-		createMail(t, root, "A.B", "cur", "j"),
-		createMail(t, root, "A.B", "cur", "k"),
-		createMail(t, root, "A.B", "cur", "l"),
+		createMailByName(t, root, "A.B", "cur", "j"),
+		createMailByName(t, root, "A.B", "cur", "k"),
+		createMailByName(t, root, "A.B", "cur", "l"),
 		// テスト1
-		createMail(t, root, "テスト1", "new", "m"),
-		createMail(t, root, "テスト1", "cur", "n"),
-		createMail(t, root, "テスト1", "new", "o"),
+		createMailByName(t, root, "テスト1", "new", "m"),
+		createMailByName(t, root, "テスト1", "cur", "n"),
+		createMailByName(t, root, "テスト1", "new", "o"),
 	}
 }
 
-func createMail(t *testing.T, rootDir string, folderName string, sub string, name string) collector.Mail {
+func createMailByName(t *testing.T, rootDir string, folderName string, sub string, name string) collector.Mail {
 
 	encodedFolderName, _ := folder.EncodeMailFolderName(folderName)
 	var physicalFolderName string
@@ -125,5 +125,31 @@ func createMail(t *testing.T, rootDir string, folderName string, sub string, nam
 		FileName:   fileName,
 		Size:       int64(size),
 		Time:       time.Now(),
+	}
+}
+
+func createMailByYearMonth(t *testing.T, rootDir string, folderName string, sub string, year int, month time.Month) collector.Mail {
+
+	encodedFolderName, _ := folder.EncodeMailFolderName(folderName)
+	var physicalFolderName string
+	if encodedFolderName == "" {
+		physicalFolderName = encodedFolderName
+	} else {
+		physicalFolderName = "." + encodedFolderName
+	}
+	folderDir := test.CreateMailFolder(t, rootDir, physicalFolderName)
+
+	time := time.Date(year, month, 1, 0, 0, 0, 0, time.UTC)
+	size := 1 // サイズは固定
+
+	mailPath, fileName := test.CreateMailByTime(t, folderDir, sub, time, size)
+
+	return collector.Mail{
+		FullPath:   mailPath,
+		FolderName: folderName,
+		SubDirName: sub,
+		FileName:   fileName,
+		Size:       int64(size),
+		Time:       time,
 	}
 }
