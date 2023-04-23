@@ -52,6 +52,12 @@ func runArchive(maildirPath string, age int64, archiveFolderName string, writer 
 		return err
 	}
 
+	if len(*mails) == 0 {
+		// アーカイブ対象無し
+		fmt.Fprintf(writer, "Completed search. There were no target mails.\n")
+		return nil
+	}
+
 	fmt.Fprintf(writer, "Completed search. The target mails are listed below.\n")
 	renderTargetMails(writer, mails)
 

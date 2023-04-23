@@ -96,6 +96,55 @@ Completed deletion.
 	assert.Equal(t, expected, result)
 }
 
+func TestDeleteCmd_Empty(t *testing.T) {
+
+	// ARRANGE
+	temp := t.TempDir()
+
+	// 削除対象外のみ
+	nonTargetMails := []collector.Mail{
+		// INBOX
+		createMail(t, temp, "", "new", 1),
+		createMail(t, temp, "", "new", 9),
+		createMail(t, temp, "", "cur", 10),
+		createMail(t, temp, "", "tmp", 11),
+		// A
+		createMail(t, temp, "A", "new", 9),
+		// A.B
+		createMail(t, temp, "A.B", "cur", 1),
+		// テスト1
+		createMail(t, temp, "テスト1", "cur", 9),
+	}
+
+	rootCmd := newRootCmd()
+	rootCmd.SetArgs([]string{
+		"delete",
+		"-d", temp,
+		"-a", "11",
+	})
+
+	buf := new(bytes.Buffer)
+	rootCmd.SetOutput(buf)
+
+	// ACT
+	err := rootCmd.Execute()
+
+	// ASSERT
+	require.NoError(t, err)
+
+	// 対象外のメールが削除されていないこと
+	for _, mail := range nonTargetMails {
+		assert.FileExists(t, mail.FullPath)
+	}
+
+	// 標準出力の内容確認
+	result := buf.String()
+	expected := fmt.Sprintf(`Starts searching for the target mails. maildir: %s age: %d
+Completed search. There were no target mails.
+`, temp, 11)
+	assert.Equal(t, expected, result)
+}
+
 func TestDeleteCmd_MaildirNotFound(t *testing.T) {
 
 	// ARRANGE
