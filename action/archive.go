@@ -8,16 +8,6 @@ import (
 	"github.com/onozaty/maildir-cleaner/folder"
 )
 
-func Delete(rootMailFolderPath string, mails *[]collector.Mail) error {
-	for _, mail := range *mails {
-		if err := os.Remove(mail.FullPath); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 func Archive(rootMailFolderPath string, mails *[]collector.Mail, archiveFolderBaseName string) (*[]collector.Mail, error) {
 	archivedMails := []collector.Mail{}
 
