@@ -130,7 +130,7 @@ Completed archive. The archived mails are listed below.
 +-----------------------+-----------------+------------------+
 ```
 
-If `year` is specified as the `--archive-pattern`, the files are archived by year.
+If `year` is specified as the `--archive-pattern`, the mails are archived by year.
 
 ```
 $ maildir-cleaner archive -d /home/user1/Maildir -a 30 --archive-pattern year
@@ -161,7 +161,7 @@ Completed archive. The archived mails are listed below.
 +---------------+-----------------+------------------+
 ```
 
-If `month` is specified as the `--archive-pattern`, the files are archived by month.
+If `month` is specified as the `--archive-pattern`, the mails are archived by month.
 
 ```
 $ maildir-cleaner archive -d /home/user1/Maildir -a 30 --archive-pattern month
