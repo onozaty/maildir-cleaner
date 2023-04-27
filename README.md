@@ -10,6 +10,7 @@
 
 * [delete](#delete) Delete old mails.
 * [archive](#archive) Archive old mails.
+* [search](#search) Search old mails.
 
 ## delete
 
@@ -193,6 +194,49 @@ Completed archive. The archived mails are listed below.
 +------------------+-----------------+------------------+
 |            Total |              18 |           18,414 |
 +------------------+-----------------+------------------+
+```
+
+## search
+
+Search old mails.
+
+### Usage
+
+```
+maildir-cleaner search -d MAIL_DIR_PATH -a AGE
+```
+
+```
+Usage:
+  maildir-cleaner search [flags]
+
+Flags:
+  -d, --dir string   User maildir path.
+  -a, --age int      The number of age days to be displayed.
+                     If you specify 10, mail that has been in the mailbox for more than 10 days since its arrival will be displayed.
+  -h, --help         help for search
+```
+
+### Example
+
+The following is an example of searching mail that is more than 30 days old, specifying the maildir of `user1`.
+
+```
+$ maildir-cleaner search -d /home/user1/Maildir -a 30
+Starts searching for the target mails. maildir: /home/user1/Maildir age: 30
+Completed search. The target mails are listed below.
++--------------+-----------------+------------------+
+| Name         | Number of mails | Total size(byte) |
++--------------+-----------------+------------------+
+|              |               7 |           11,412 |
+| A            |               2 |            1,644 |
+| INBOX.Drafts |               1 |              507 |
+| INBOX.Sent   |               5 |            2,611 |
+| INBOX.Trash  |               1 |              506 |
+| test         |               1 |              912 |
++--------------+-----------------+------------------+
+|        Total |              17 |           17,592 |
++--------------+-----------------+------------------+
 ```
 
 ## Install

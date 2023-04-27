@@ -19,10 +19,12 @@ func newRootCmd() *cobra.Command {
 			HiddenDefaultCmd: true,
 		},
 	}
-
-	rootCmd.AddCommand(newVersionCmd())
 	rootCmd.AddCommand(newDeleteCmd())
 	rootCmd.AddCommand(newArchiveCmd())
+	rootCmd.AddCommand(newSearchCmd())
+	rootCmd.AddCommand(newVersionCmd())
+
+	cobra.EnableCommandSorting = false // サブコマンドを設定順で表示
 
 	for _, c := range rootCmd.Commands() {
 		// フラグ以外は受け付けないように
