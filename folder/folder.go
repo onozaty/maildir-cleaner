@@ -106,6 +106,8 @@ func ensureDir(dirPath string) error {
 		if err != nil {
 			return err
 		}
+		// オーナーを親と同じに
+		return ChownInherited(dirPath)
 	}
 
 	return nil
