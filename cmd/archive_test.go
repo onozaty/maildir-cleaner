@@ -366,6 +366,107 @@ Completed archive. The archived mails are listed below.
 	assert.Equal(t, expected, result)
 }
 
+func TestArchiveCmd_IgnoreArchiveFolder(t *testing.T) {
+
+	// ARRANGE
+	temp := t.TempDir()
+
+	// アーカイブ対象(1日以上経過)
+	targetMails := []collector.Mail{
+		// INBOX
+		createMailByDays(t, temp, "", "new", 1),
+		createMailByDays(t, temp, "", "cur", 2),
+		// A
+		createMailByDays(t, temp, "A", "new", 3),
+		// A.B
+		createMailByDays(t, temp, "A.B", "cur", 4),
+		createMailByDays(t, temp, "A.B", "new", 5),
+	}
+
+	// アーカイブ対象外(経過しているが、既にアーカイブフォルダ配下にあるもの)
+	nonTargetMails := []collector.Mail{
+		createMailByDays(t, temp, "Archived", "new", 11),
+		createMailByDays(t, temp, "Archived.A", "cur", 12),
+		createMailByDays(t, temp, "Archived.A.B", "new", 13),
+	}
+
+	subscriptionsPath := filepath.Join(temp, "subscriptions")
+	test.CreateFile(t, subscriptionsPath, "A\nA.B\nArchived\nArchived.A\nArchived.A.B\n")
+
+	rootCmd := newRootCmd()
+	rootCmd.SetArgs([]string{
+		"archive",
+		"-d", temp,
+		"-a", "1",
+	})
+
+	buf := new(bytes.Buffer)
+	rootCmd.SetOutput(buf)
+
+	// ACT
+	err := rootCmd.Execute()
+
+	// ASSERT
+	require.NoError(t, err)
+
+	// 対象のメールが元のフォルダに無い＆移動先にあること
+	for _, mail := range targetMails {
+		assert.NoFileExists(t, mail.FullPath)
+
+		var archivedFolderName string
+		if mail.FolderName == "" {
+			archivedFolderName = "Archived"
+		} else {
+			archivedFolderName = "Archived" + "." + mail.FolderName
+		}
+
+		encodedFolderName, _ := folder.EncodeMailFolderName(archivedFolderName)
+		archivedMailPath := filepath.Join(
+			temp,
+			"."+encodedFolderName,
+			mail.SubDirName,
+			mail.FileName)
+
+		assert.FileExists(t, archivedMailPath)
+		assert.NoFileExists(t, mail.FullPath)
+	}
+
+	// 対象外のメールが削除されていないこと
+	for _, mail := range nonTargetMails {
+		assert.FileExists(t, mail.FullPath)
+	}
+
+	// subscriptionsに登録されていること
+	assert.Equal(t, "A\nA.B\nArchived\nArchived.A\nArchived.A.B\n", test.ReadFile(t, subscriptionsPath))
+
+	// 標準出力の内容確認
+	result := buf.String()
+	expected := fmt.Sprintf(`Starts searching for the target mails. maildir: %s age: %d
+Completed search. The target mails are listed below.
++-------+-----------------+------------------+
+| Name  | Number of mails | Total size(byte) |
++-------+-----------------+------------------+
+|       |               2 |                3 |
+| A     |               1 |                3 |
+| A.B   |               2 |                9 |
++-------+-----------------+------------------+
+| Total |               5 |               15 |
++-------+-----------------+------------------+
+Starts archiving mails.
+Completed archive. The archived mails are listed below.
++--------------+-----------------+------------------+
+| Name         | Number of mails | Total size(byte) |
++--------------+-----------------+------------------+
+| Archived     |               2 |                3 |
+| Archived.A   |               1 |                3 |
+| Archived.A.B |               2 |                9 |
++--------------+-----------------+------------------+
+|        Total |               5 |               15 |
++--------------+-----------------+------------------+
+`, temp, 1)
+	assert.Equal(t, expected, result)
+}
+
 func TestArchiveCmd_ArchiveFileNameMultibyte(t *testing.T) {
 
 	// ARRANGE
@@ -383,16 +484,20 @@ func TestArchiveCmd_ArchiveFileNameMultibyte(t *testing.T) {
 		createMailByDays(t, temp, "テスト1", "cur", 5),
 	}
 
-	// アーカイブ対象外(5日未満)
+	// アーカイブ対象外(5日未満 or アーカイブフォルダ配下)
 	nonTargetMails := []collector.Mail{
 		// INBOX
 		createMailByDays(t, temp, "", "new", 4),
 		// テスト1
 		createMailByDays(t, temp, "テスト1", "cur", 3),
+		// アーカイブ
+		createMailByDays(t, temp, "アーカイブ", "cur", 100),
+		// アーカイブ.A
+		createMailByDays(t, temp, "アーカイブ.A", "cur", 1000),
 	}
 
 	subscriptionsPath := filepath.Join(temp, "subscriptions")
-	test.CreateFile(t, subscriptionsPath, "A\nA.B\n&MMYwuTDI-1\n")
+	test.CreateFile(t, subscriptionsPath, "A\nA.B\n&MMYwuTDI-1\n&MKIw,DCrMKQw1g-\n&MKIw,DCrMKQw1g-.A\n")
 
 	rootCmd := newRootCmd()
 	rootCmd.SetArgs([]string{

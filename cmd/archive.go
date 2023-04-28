@@ -51,7 +51,7 @@ func runArchive(maildirPath string, age int64, archiveFolderNameGenerator action
 
 	// 対象のメールを収集
 	fmt.Fprintf(writer, "Starts searching for the target mails. maildir: %s age: %d\n", maildirPath, age)
-	collector := collector.NewCollector(age, "")
+	collector := collector.NewCollector(age, archiveFolderNameGenerator.BaseName()) // アーカイブフォルダは対象外で
 	mails, err := collector.Collect(maildirPath)
 
 	if err != nil {

@@ -10,6 +10,7 @@ import (
 
 type ArchiveFolderNameGenerator interface {
 	Generate(mail collector.Mail) string
+	BaseName() string
 }
 
 type KeepArchiveFolderNameGenerator struct {
@@ -25,6 +26,10 @@ func (g *KeepArchiveFolderNameGenerator) Generate(mail collector.Mail) string {
 	return g.ArchiveFolderBaseName + "." + mail.FolderName
 }
 
+func (g *KeepArchiveFolderNameGenerator) BaseName() string {
+	return g.ArchiveFolderBaseName
+}
+
 type YearArchiveFolderNameGenerator struct {
 	ArchiveFolderBaseName string
 }
@@ -32,6 +37,10 @@ type YearArchiveFolderNameGenerator struct {
 func (g *YearArchiveFolderNameGenerator) Generate(mail collector.Mail) string {
 	year := mail.Time.UTC().Format("2006")
 	return g.ArchiveFolderBaseName + "." + year
+}
+
+func (g *YearArchiveFolderNameGenerator) BaseName() string {
+	return g.ArchiveFolderBaseName
 }
 
 type MonthArchiveFolderNameGenerator struct {
@@ -42,6 +51,10 @@ func (g *MonthArchiveFolderNameGenerator) Generate(mail collector.Mail) string {
 	year := mail.Time.UTC().Format("2006")
 	month := mail.Time.UTC().Format("01")
 	return g.ArchiveFolderBaseName + "." + year + "." + month
+}
+
+func (g *MonthArchiveFolderNameGenerator) BaseName() string {
+	return g.ArchiveFolderBaseName
 }
 
 func Archive(rootMailFolderPath string, mails *[]collector.Mail, archiveFolderNameGenerator ArchiveFolderNameGenerator) (*[]collector.Mail, error) {
