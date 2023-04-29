@@ -23,7 +23,7 @@ type Collector struct {
 	target func(Mail) bool
 }
 
-func NewCollector(ageOfDays int64, ignoreFolderName string) *Collector {
+func NewCollector(ageOfDays int64, excludeFolderNames ...string) *Collector {
 
 	// 現在日時 - 経過日
 	targetMaxTime := time.Now().AddDate(0, 0, -int(ageOfDays))
@@ -31,9 +31,7 @@ func NewCollector(ageOfDays int64, ignoreFolderName string) *Collector {
 	return &Collector{
 		target: func(mail Mail) bool {
 
-			if ignoreFolderName != "" &&
-				(mail.FolderName == ignoreFolderName || strings.HasPrefix(mail.FolderName, ignoreFolderName+".")) {
-				// 対象外のフォルダ名と一致(サブフォルダも考慮)
+			if excludeFolder(mail, excludeFolderNames) {
 				return false
 			}
 
@@ -146,4 +144,18 @@ func (c *Collector) collectMails(mailFolderName string, dirPath string) (*[]Mail
 	}
 
 	return &collectedMails, nil
+}
+
+func excludeFolder(mail Mail, excludeFolderNames []string) bool {
+
+	for _, excludeFolderName := range excludeFolderNames {
+
+		if mail.FolderName == excludeFolderName || strings.HasPrefix(mail.FolderName, excludeFolderName+".") {
+			// 対象外のフォルダ名と一致(サブフォルダも考慮)
+			return true
+		}
+
+	}
+
+	return false
 }

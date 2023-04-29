@@ -19,7 +19,7 @@ Delete old mails.
 ### Usage
 
 ```
-maildir-cleaner delete -d MAIL_DIR_PATH -a AGE
+maildir-cleaner delete -d MAIL_DIR_PATH -a AGE [[--exclude-folder EXCLUDE_FOLDER1] ...]
 ```
 
 ```
@@ -27,10 +27,11 @@ Usage:
   maildir-cleaner delete [flags]
 
 Flags:
-  -d, --dir string   User maildir path.
-  -a, --age int      The number of age days to be deleted.
-                     If you specify 10, mail that has been in the mailbox for more than 10 days since its arrival will be deleted.
-  -h, --help         help for delete
+  -d, --dir string                   User maildir path.
+  -a, --age int                      The number of age days to be deleted.
+                                     If you specify 10, mail that has been in the mailbox for more than 10 days since its arrival will be deleted.
+      --exclude-folder stringArray   The name of the folder to exclude.
+  -h, --help                         help for delete
 ```
 
 ### Example
@@ -64,7 +65,7 @@ Archive old mails.
 ### Usage
 
 ```
-maildir-cleaner archive -d MAIL_DIR_PATH -a AGE [--archive-folder ARCHIVE_FOLDER_NAME] [--archive-pattern ARCHIVE_PATTERN]
+maildir-cleaner archive -d MAIL_DIR_PATH -a AGE [--archive-folder ARCHIVE_FOLDER_NAME] [--archive-pattern ARCHIVE_PATTERN] [[--exclude-folder EXCLUDE_FOLDER1] ...]
 ```
 
 ```
@@ -72,12 +73,13 @@ Usage:
   maildir-cleaner archive [flags]
 
 Flags:
-  -d, --dir string               User maildir path.
-  -a, --age int                  The number of age days to be archived.
-                                 If you specify 10, mail that has been in the mailbox for more than 10 days since its arrival will be archived.
-      --archive-folder string    Archive folder name. (default "Archived")
-      --archive-pattern string   Archive pattern. can be specified: keep, year, month (default "keep")
-  -h, --help                     help for archive
+  -d, --dir string                   User maildir path.
+  -a, --age int                      The number of age days to be archived.
+                                     If you specify 10, mail that has been in the mailbox for more than 10 days since its arrival will be archived.
+      --archive-folder string        Archive folder name. (default "Archived")
+      --archive-pattern string       Archive pattern. can be specified: keep, year, month (default "keep")
+      --exclude-folder stringArray   The name of the folder to exclude.
+  -h, --help                         help for archive
 ```
 
 There are three types of `--archive-pattern`.
@@ -203,7 +205,7 @@ Search old mails.
 ### Usage
 
 ```
-maildir-cleaner search -d MAIL_DIR_PATH -a AGE
+maildir-cleaner search -d MAIL_DIR_PATH -a AGE [[--exclude-folder EXCLUDE_FOLDER1] ...]
 ```
 
 ```
@@ -211,10 +213,11 @@ Usage:
   maildir-cleaner search [flags]
 
 Flags:
-  -d, --dir string   User maildir path.
-  -a, --age int      The number of age days to be displayed.
-                     If you specify 10, mail that has been in the mailbox for more than 10 days since its arrival will be displayed.
-  -h, --help         help for search
+  -d, --dir string                   User maildir path.
+  -a, --age int                      The number of age days to be displayed.
+                                     If you specify 10, mail that has been in the mailbox for more than 10 days since its arrival will be displayed.
+      --exclude-folder stringArray   The name of the folder to exclude.
+  -h, --help                         help for search
 ```
 
 ### Example

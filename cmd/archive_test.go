@@ -467,6 +467,123 @@ Completed archive. The archived mails are listed below.
 	assert.Equal(t, expected, result)
 }
 
+func TestArchiveCmd_ExcludeFolder(t *testing.T) {
+
+	// ARRANGE
+	temp := t.TempDir()
+
+	// アーカイブ対象
+	targetMails := []collector.Mail{
+		// INBOX
+		createMailByDays(t, temp, "", "new", 1),
+		createMailByDays(t, temp, "", "new", 2),
+		createMailByDays(t, temp, "", "cur", 3),
+		createMailByDays(t, temp, "", "cur", 4),
+		// A
+		createMailByDays(t, temp, "A", "new", 5),
+		// A.B
+		createMailByDays(t, temp, "A.B", "cur", 6),
+		createMailByDays(t, temp, "A.B", "new", 7),
+		// テスト1
+		createMailByDays(t, temp, "テスト1", "cur", 8),
+		createMailByDays(t, temp, "テスト1", "cur", 9),
+	}
+
+	// アーカイブ対象外(除外フォルダとして指定+アーカイブフォルダ配下)
+	nonTargetMails := []collector.Mail{
+		// B
+		createMailByDays(t, temp, "B", "new", 11),
+		// B.A
+		createMailByDays(t, temp, "B.A", "cur", 12),
+		// テスト2
+		createMailByDays(t, temp, "テスト2", "cur", 13),
+		// Archived
+		createMailByDays(t, temp, "Archived", "cur", 14),
+		// Archived.B
+		createMailByDays(t, temp, "Archived.B", "cur", 15),
+	}
+
+	subscriptionsPath := filepath.Join(temp, "subscriptions")
+	test.CreateFile(t, subscriptionsPath, "A\nA.B\n&MMYwuTDI-1\n&MMYwuTDI-2\nB\bB.A\nArchived\nArchived.A\n")
+
+	rootCmd := newRootCmd()
+	rootCmd.SetArgs([]string{
+		"archive",
+		"-d", temp,
+		"-a", "1",
+		"--exclude-folder", "B",
+		"--exclude-folder", "テスト2",
+	})
+
+	buf := new(bytes.Buffer)
+	rootCmd.SetOutput(buf)
+
+	// ACT
+	err := rootCmd.Execute()
+
+	// ASSERT
+	require.NoError(t, err)
+
+	// 対象のメールが元のフォルダに無い＆移動先にあること
+	for _, mail := range targetMails {
+		assert.NoFileExists(t, mail.FullPath)
+
+		var archivedFolderName string
+		if mail.FolderName == "" {
+			archivedFolderName = "Archived"
+		} else {
+			archivedFolderName = "Archived" + "." + mail.FolderName
+		}
+
+		encodedFolderName, _ := folder.EncodeMailFolderName(archivedFolderName)
+		archivedMailPath := filepath.Join(
+			temp,
+			"."+encodedFolderName,
+			mail.SubDirName,
+			mail.FileName)
+
+		assert.FileExists(t, archivedMailPath)
+		assert.NoFileExists(t, mail.FullPath)
+	}
+
+	// 対象外のメールが削除されていないこと
+	for _, mail := range nonTargetMails {
+		assert.FileExists(t, mail.FullPath)
+	}
+
+	// subscriptionsに登録されていること
+	assert.Equal(t, "A\nA.B\n&MMYwuTDI-1\n&MMYwuTDI-2\nB\bB.A\nArchived\nArchived.A\nArchived.A.B\nArchived.&MMYwuTDI-1\n", test.ReadFile(t, subscriptionsPath))
+
+	// 標準出力の内容確認
+	result := buf.String()
+	expected := fmt.Sprintf(`Starts searching for the target mails. maildir: %s age: %d
+Completed search. The target mails are listed below.
++---------+-----------------+------------------+
+| Name    | Number of mails | Total size(byte) |
++---------+-----------------+------------------+
+|         |               4 |               10 |
+| A       |               1 |                5 |
+| A.B     |               2 |               13 |
+| テスト1 |               2 |               17 |
++---------+-----------------+------------------+
+|   Total |               9 |               45 |
++---------+-----------------+------------------+
+Starts archiving mails.
+Completed archive. The archived mails are listed below.
++------------------+-----------------+------------------+
+| Name             | Number of mails | Total size(byte) |
++------------------+-----------------+------------------+
+| Archived         |               4 |               10 |
+| Archived.A       |               1 |                5 |
+| Archived.A.B     |               2 |               13 |
+| Archived.テスト1 |               2 |               17 |
++------------------+-----------------+------------------+
+|            Total |               9 |               45 |
++------------------+-----------------+------------------+
+`, temp, 1)
+	assert.Equal(t, expected, result)
+}
+
 func TestArchiveCmd_ArchiveFileNameMultibyte(t *testing.T) {
 
 	// ARRANGE

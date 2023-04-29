@@ -17,6 +17,7 @@ func newSearchCmd() *cobra.Command {
 
 			maildirPath, _ := cmd.Flags().GetString("dir")
 			age, _ := cmd.Flags().GetInt64("age")
+			excludeFolderNames, _ := cmd.Flags().GetStringArray("exclude-folder")
 
 			// 引数の解析に成功した時点で、エラーが起きてもUsageは表示しない
 			cmd.SilenceUsage = true
@@ -24,6 +25,7 @@ func newSearchCmd() *cobra.Command {
 			return runSearch(
 				maildirPath,
 				age,
+				excludeFolderNames,
 				cmd.OutOrStdout())
 		},
 	}
@@ -32,15 +34,16 @@ func newSearchCmd() *cobra.Command {
 	subCmd.MarkFlagRequired("dir")
 	subCmd.Flags().Int64P("age", "a", 0, "The number of age days to be displayed.\nIf you specify 10, mail that has been in the mailbox for more than 10 days since its arrival will be displayed.")
 	subCmd.MarkFlagRequired("age")
+	subCmd.Flags().StringArrayP("exclude-folder", "", []string{}, "The name of the folder to exclude.")
 
 	return subCmd
 }
 
-func runSearch(maildirPath string, age int64, writer io.Writer) error {
+func runSearch(maildirPath string, age int64, excludeFolderNames []string, writer io.Writer) error {
 
 	// 対象のメールを収集
 	fmt.Fprintf(writer, "Starts searching for the target mails. maildir: %s age: %d\n", maildirPath, age)
-	collector := collector.NewCollector(age, "")
+	collector := collector.NewCollector(age, excludeFolderNames...)
 	mails, err := collector.Collect(maildirPath)
 
 	if err != nil {

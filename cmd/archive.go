@@ -25,6 +25,8 @@ func newArchiveCmd() *cobra.Command {
 				return err
 			}
 
+			excludeFolderNames, _ := cmd.Flags().GetStringArray("exclude-folder")
+
 			// 引数の解析に成功した時点で、エラーが起きてもUsageは表示しない
 			cmd.SilenceUsage = true
 
@@ -32,6 +34,7 @@ func newArchiveCmd() *cobra.Command {
 				maildirPath,
 				age,
 				archiveFolderNameGenerator,
+				excludeFolderNames,
 				cmd.OutOrStdout())
 		},
 	}
@@ -43,15 +46,19 @@ func newArchiveCmd() *cobra.Command {
 
 	subCmd.Flags().StringP("archive-folder", "", "Archived", "Archive folder name.")
 	subCmd.Flags().StringP("archive-pattern", "", "keep", "Archive pattern. can be specified: keep, year, month")
+	subCmd.Flags().StringArrayP("exclude-folder", "", []string{}, "The name of the folder to exclude.")
 
 	return subCmd
 }
 
-func runArchive(maildirPath string, age int64, archiveFolderNameGenerator action.ArchiveFolderNameGenerator, writer io.Writer) error {
+func runArchive(maildirPath string, age int64, archiveFolderNameGenerator action.ArchiveFolderNameGenerator, excludeFolderNames []string, writer io.Writer) error {
 
 	// 対象のメールを収集
 	fmt.Fprintf(writer, "Starts searching for the target mails. maildir: %s age: %d\n", maildirPath, age)
-	collector := collector.NewCollector(age, archiveFolderNameGenerator.BaseName()) // アーカイブフォルダは対象外で
+	collector := collector.NewCollector(
+		age,
+		// アーカイブフォルダも対象外に
+		append(excludeFolderNames, archiveFolderNameGenerator.BaseName())...)
 	mails, err := collector.Collect(maildirPath)
 
 	if err != nil {
