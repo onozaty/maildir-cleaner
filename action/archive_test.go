@@ -105,7 +105,7 @@ func TestArchive_Year(t *testing.T) {
 	}
 
 	subscriptionsPath := filepath.Join(temp, "subscriptions")
-	test.CreateFile(t, subscriptionsPath, "A\nA.B\nArchived.2020\n")
+	test.CreateFile(t, subscriptionsPath, "A\nA.B\nArchived\nArchived.2020\n")
 
 	archiveFolderNameGenerator := &YearArchiveFolderNameGenerator{
 		ArchiveFolderBaseName: "Archived",
@@ -149,7 +149,7 @@ func TestArchive_Year(t *testing.T) {
 	}
 
 	// subscriptionsに追加されていること
-	assert.Equal(t, "A\nA.B\nArchived.2020\nArchived.2021\n", test.ReadFile(t, subscriptionsPath))
+	assert.Equal(t, "A\nA.B\nArchived\nArchived.2020\nArchived.2021\n", test.ReadFile(t, subscriptionsPath))
 }
 
 func TestArchive_Month(t *testing.T) {
@@ -176,7 +176,7 @@ func TestArchive_Month(t *testing.T) {
 	}
 
 	subscriptionsPath := filepath.Join(temp, "subscriptions")
-	test.CreateFile(t, subscriptionsPath, "A\nA.B\nArchived.2020.01\n")
+	test.CreateFile(t, subscriptionsPath, "A\nA.B\nArchived\nArchived.2020\nArchived.2020.01\n")
 
 	archiveFolderNameGenerator := &MonthArchiveFolderNameGenerator{
 		ArchiveFolderBaseName: "Archived",
@@ -220,7 +220,7 @@ func TestArchive_Month(t *testing.T) {
 	}
 
 	// subscriptionsに追加されていること
-	assert.Equal(t, "A\nA.B\nArchived.2020.01\nArchived.2020.02\nArchived.2021.01\nArchived.2021.12\n", test.ReadFile(t, subscriptionsPath))
+	assert.Equal(t, "A\nA.B\nArchived\nArchived.2020\nArchived.2020.01\nArchived.2020.02\nArchived.2021\nArchived.2021.01\nArchived.2021.12\n", test.ReadFile(t, subscriptionsPath))
 }
 
 func TestArchive_ArchiveFolderBaseNameMultibyte(t *testing.T) {

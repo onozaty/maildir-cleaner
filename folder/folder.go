@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/emersion/go-imap/utf7"
 )
@@ -30,6 +31,32 @@ func EncodeMailFolderName(decodedName string) (string, error) {
 }
 
 func Setup(rootMailFolderPath string, folderName string) (string, error) {
+
+	// 親フォルダも含めて作成していく
+	currentFolderName := ""
+	lastFolderPath := ""
+
+	for i, partName := range strings.Split(folderName, ".") {
+
+		if i != 0 {
+			currentFolderName += "."
+		}
+
+		currentFolderName += partName
+
+		folderPath, err := setup(rootMailFolderPath, currentFolderName)
+		if err != nil {
+			return "", err
+		}
+
+		lastFolderPath = folderPath
+	}
+
+	return lastFolderPath, nil
+}
+
+func setup(rootMailFolderPath string, folderName string) (string, error) {
+
 	encodedFolderName, err := EncodeMailFolderName(folderName)
 	if err != nil {
 		return "", err

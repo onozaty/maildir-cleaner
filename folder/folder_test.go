@@ -125,6 +125,53 @@ func TestSetup_AlreadyExists(t *testing.T) {
 	assert.DirExists(t, filepath.Join(expectedFolderPath, "tmp"))
 }
 
+func TestSetup_ParentFolders(t *testing.T) {
+
+	// ARRANGE
+	temp := t.TempDir()
+
+	subscriptionsPath := filepath.Join(temp, "subscriptions")
+	test.CreateFile(t, subscriptionsPath, "X\n")
+
+	// ACT
+	folderPath, err := Setup(temp, "X.Y.Z.テスト")
+
+	// ASSERT
+	require.NoError(t, err)
+
+	expectedFolderPath := filepath.Join(temp, ".X.Y.Z.&MMYwuTDI-")
+	assert.Equal(t, expectedFolderPath, folderPath)
+	assert.Equal(t, "X\nX.Y\nX.Y.Z\nX.Y.Z.&MMYwuTDI-\n", test.ReadFile(t, subscriptionsPath))
+
+	assert.DirExists(t, expectedFolderPath)
+	assert.DirExists(t, filepath.Join(expectedFolderPath, "cur"))
+	assert.DirExists(t, filepath.Join(expectedFolderPath, "new"))
+	assert.DirExists(t, filepath.Join(expectedFolderPath, "tmp"))
+
+	// 親フォルダも生成されていることをチェック
+	{
+		expectedParentFolderPath := filepath.Join(temp, ".X")
+		assert.DirExists(t, expectedParentFolderPath)
+		assert.DirExists(t, filepath.Join(expectedParentFolderPath, "cur"))
+		assert.DirExists(t, filepath.Join(expectedParentFolderPath, "new"))
+		assert.DirExists(t, filepath.Join(expectedParentFolderPath, "tmp"))
+	}
+	{
+		expectedParentFolderPath := filepath.Join(temp, ".X.Y")
+		assert.DirExists(t, expectedParentFolderPath)
+		assert.DirExists(t, filepath.Join(expectedParentFolderPath, "cur"))
+		assert.DirExists(t, filepath.Join(expectedParentFolderPath, "new"))
+		assert.DirExists(t, filepath.Join(expectedParentFolderPath, "tmp"))
+	}
+	{
+		expectedParentFolderPath := filepath.Join(temp, ".X.Y.Z")
+		assert.DirExists(t, expectedParentFolderPath)
+		assert.DirExists(t, filepath.Join(expectedParentFolderPath, "cur"))
+		assert.DirExists(t, filepath.Join(expectedParentFolderPath, "new"))
+		assert.DirExists(t, filepath.Join(expectedParentFolderPath, "tmp"))
+	}
+}
+
 func TestSetup_SubscriptionsEmpty(t *testing.T) {
 
 	// ARRANGE
@@ -141,12 +188,19 @@ func TestSetup_SubscriptionsEmpty(t *testing.T) {
 
 	expectedFolderPath := filepath.Join(temp, ".A.B")
 	assert.Equal(t, expectedFolderPath, folderPath)
-	assert.Equal(t, "A.B\n", test.ReadFile(t, subscriptionsPath))
+	assert.Equal(t, "A\nA.B\n", test.ReadFile(t, subscriptionsPath))
 
 	assert.DirExists(t, expectedFolderPath)
 	assert.DirExists(t, filepath.Join(expectedFolderPath, "cur"))
 	assert.DirExists(t, filepath.Join(expectedFolderPath, "new"))
 	assert.DirExists(t, filepath.Join(expectedFolderPath, "tmp"))
+
+	// 親フォルダも作成されていること
+	expectedParentFolderPath := filepath.Join(temp, ".A")
+	assert.DirExists(t, expectedParentFolderPath)
+	assert.DirExists(t, filepath.Join(expectedParentFolderPath, "cur"))
+	assert.DirExists(t, filepath.Join(expectedParentFolderPath, "new"))
+	assert.DirExists(t, filepath.Join(expectedParentFolderPath, "tmp"))
 }
 
 func TestSetup_SubscriptionsNoLineBreak(t *testing.T) {

@@ -216,7 +216,7 @@ func TestArchiveCmd_ArchivePatternYear(t *testing.T) {
 	}
 
 	// subscriptionsに登録されていること
-	assert.Equal(t, "A\nA.B\n&MMYwuTDI-1\nArchived.2020\nArchived.2021\n", test.ReadFile(t, subscriptionsPath))
+	assert.Equal(t, "A\nA.B\n&MMYwuTDI-1\nArchived\nArchived.2020\nArchived.2021\n", test.ReadFile(t, subscriptionsPath))
 
 	// 標準出力の内容確認
 	result := buf.String()
@@ -291,7 +291,7 @@ func TestArchiveCmd_ArchivePatternMonth(t *testing.T) {
 	}
 
 	subscriptionsPath := filepath.Join(temp, "subscriptions")
-	test.CreateFile(t, subscriptionsPath, "A\nA.B\n&MMYwuTDI-1\nArchived.2020.01\n")
+	test.CreateFile(t, subscriptionsPath, "A\nA.B\n&MMYwuTDI-1\nArchived\nArchived.2020\nArchived.2020.01\n")
 
 	rootCmd := newRootCmd()
 	rootCmd.SetArgs([]string{
@@ -333,7 +333,7 @@ func TestArchiveCmd_ArchivePatternMonth(t *testing.T) {
 	}
 
 	// subscriptionsに登録されていること
-	assert.Equal(t, "A\nA.B\n&MMYwuTDI-1\nArchived.2020.01\nArchived.2020.12\nArchived.2021.01\nArchived.2020.02\nArchived.2020.11\n", test.ReadFile(t, subscriptionsPath))
+	assert.Equal(t, "A\nA.B\n&MMYwuTDI-1\nArchived\nArchived.2020\nArchived.2020.01\nArchived.2020.12\nArchived.2021\nArchived.2021.01\nArchived.2020.02\nArchived.2020.11\n", test.ReadFile(t, subscriptionsPath))
 
 	// 標準出力の内容確認
 	result := buf.String()
